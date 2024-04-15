@@ -64,7 +64,7 @@ int main() {
 
 		SOCKET clnt_sock = accept(s, reinterpret_cast<SOCKADDR*>(&cliAddr), &xx);
 		
-		//ÇÏÆ®ºñÆ® ¿É¼Ç Ãß°¡.
+		//í•˜íŠ¸ë¹„íŠ¸ ì˜µì…˜ ì¶”ê°€.
 		WSAIoctl(clnt_sock, SIO_KEEPALIVE_VALS, &tcpKeepAliveVals, sizeof(tcpKeepAliveVals), nullptr, 0, &dwreturned, nullptr, nullptr);
 
 		std::thread t = std::thread(handle_clnt, (void*)&clnt_sock);
@@ -96,7 +96,7 @@ public:
 		cout << "current chatroom count : " << ChatRoomList.size() << endl;
 	}
 	void removeUser(int userSocket) {
-		if (user.size() == 1) { // ¸¶Áö¸· ÀÎ¿øÀÌ ¿äÃ»ÇÒ °æ¿ì ¸Ş¸ğ¸®¸¦ ÇØÁ¦ÇÏ°í ¸®ÅÏÇÕ´Ï´Ù.
+		if (user.size() == 1) { // ë§ˆì§€ë§‰ ì¸ì›ì´ ìš”ì²­í•  ê²½ìš° ë©”ëª¨ë¦¬ë¥¼ í•´ì œí•˜ê³  ë¦¬í„´í•©ë‹ˆë‹¤.
 			delete this;
 			return;
 		}
@@ -134,26 +134,26 @@ void* handle_clnt(void* arg) {
 	while ((str_len = recv(clnt_sock, msg, sizeof(msg), 0)) != 0) {
 		clnt_sock_mu.lock();
 		if (cr == nullptr) {
-			/* msg q||Q ¸¦ Ã³¸®ÇÏÁö ¾Ê´Â ÀÌÀ¯´Â
-			* clnt ÃøÀÌ Ã¤ÆÃ¹æ ¾ø´Â »óÅÂ¿¡¼­ q||Q ÀÔ·Â½Ã
-			* ¸Ş½ÃÁö¸¦ º¸³»Áö ¾Ê°í ¼ÒÄÏÀ» Á¾·áÇÏ±â ¶§¹®ÀÔ´Ï´Ù.
+			/* msg q||Q ë¥¼ ì²˜ë¦¬í•˜ì§€ ì•ŠëŠ” ì´ìœ ëŠ”
+			* clnt ì¸¡ì´ ì±„íŒ…ë°© ì—†ëŠ” ìƒíƒœì—ì„œ q||Q ì…ë ¥ì‹œ
+			* ë©”ì‹œì§€ë¥¼ ë³´ë‚´ì§€ ì•Šê³  ì†Œì¼“ì„ ì¢…ë£Œí•˜ê¸° ë•Œë¬¸ì…ë‹ˆë‹¤.
 			*/ 
 
-			if (!strcmp(msg, "n") || !strcmp(msg, "N")) { // »õ Ã¤ÆÃ¹æ ¸¸µé±â
+			if (!strcmp(msg, "n") || !strcmp(msg, "N")) { // ìƒˆ ì±„íŒ…ë°© ë§Œë“¤ê¸°
 				cr = createRoom();
 				cr->addUser(clnt_sock);
 				send(clnt_sock, cr->getChatCode().c_str(), 6, 0);
 			}
-			else if(str_len == 8){ // Ã¤ÆÃ¹æ ÄÚµå·Î Âü¿©ÇÏ±â
+			else if(str_len == 8){ // ì±„íŒ…ë°© ì½”ë“œë¡œ ì°¸ì—¬í•˜ê¸°
 				for (int i = 0; i < ChatRoomList.size(); i++) {
 					if (!strcmp(ChatRoomList[i]->getChatCode().c_str(), msg)) {
 						cr = ChatRoomList[i];
 						cr->addUser(clnt_sock);
-						send(clnt_sock, msg, str_len, 0); // Ã¤ÆÃ¹æ ÄÚµå ÀÏÄ¡ÇÑ´Ù´Â ½ÅÈ£
+						send(clnt_sock, msg, str_len, 0); // ì±„íŒ…ë°© ì½”ë“œ ì¼ì¹˜í•œë‹¤ëŠ” ì‹ í˜¸
 						break;
 					}
 				}
-				if (cr == nullptr) { // ÄÚµå Æ²·ÈÀ½
+				if (cr == nullptr) { // ì½”ë“œ í‹€ë ¸ìŒ
 					send(clnt_sock, "fail", sizeof("fail"), 0);
 				}
 			}
@@ -163,18 +163,18 @@ void* handle_clnt(void* arg) {
 				break;
 			}
 		}
-		else { // Ã¤ÆÃ¹æ ÀÖÀ½
-			if (str_len == -1) { // SOCKET_ERROR. ÀÌ °æ¿ì´Â Ã¤ÆÃ¹æÀÌ ÀÖ´Â »óÅÂ¿¡¼­ ÄÜ¼ÖÀ» Á¾·áÇßÀ» °¡´É¼ºÀÌ ÀÖÀ½.
+		else { // ì±„íŒ…ë°© ìˆìŒ
+			if (str_len == -1) { // SOCKET_ERROR. ì´ ê²½ìš°ëŠ” ì±„íŒ…ë°©ì´ ìˆëŠ” ìƒíƒœì—ì„œ ì½˜ì†”ì„ ì¢…ë£Œí–ˆì„ ê°€ëŠ¥ì„±ì´ ìˆìŒ.
 				cout << "disconnected" << endl;
 				clnt_sock_mu.unlock();
 				break;
 			}
 
-			if (!strcmp(msg, "q") || !strcmp(msg,"Q")) { // ³ª°¡±â
+			if (!strcmp(msg, "q") || !strcmp(msg,"Q")) { // ë‚˜ê°€ê¸°
 				cr->removeUser(clnt_sock);
 				cr = nullptr;
 			}
-			else { // Ã¤ÆÃ ÀüÆÄ
+			else { // ì±„íŒ… ì „íŒŒ
 				cr->sendMessage(msg, str_len);
 			}
 		}
@@ -184,7 +184,7 @@ void* handle_clnt(void* arg) {
 
 	clnt_sock_mu.lock();
 
-	if (cr != nullptr) { // Å¬¶óÀÌ¾ğÆ®°¡ Á¾·áÇÑ »óÈ²ÀÌ´Ï Ã¤ÆÃ¹æÀ» ³ª°¡Áö ¾Ê°í Á¾·áÇÑ °æ¿ì ¹İ¿µ
+	if (cr != nullptr) { // í´ë¼ì´ì–¸íŠ¸ê°€ ì¢…ë£Œí•œ ìƒí™©ì´ë‹ˆ ì±„íŒ…ë°©ì„ ë‚˜ê°€ì§€ ì•Šê³  ì¢…ë£Œí•œ ê²½ìš° ë°˜ì˜
 		cr->removeUser(clnt_sock);
 		cr = nullptr;
 	}
@@ -206,18 +206,18 @@ ChatRoom* createRoom() {
 
 	srand(time(NULL));
 
-	for (int i = 0; i < 6; i++) { // ÃªÄÚµå ÀÛ¼º
+	for (int i = 0; i < 6; i++) { // ì±—ì½”ë“œ ì‘ì„±
 		str = str + (char)('A' + rand() % 26);
 	}
 
 	for (int i = 0; i < ChatRoomList.size(); i++) {
-		// ÃªÄÚµå°¡ ÀÏÄ¡ÇÏ´Â °æ¿ì ´Ù½Ã ÃªÄÚµå¸¦ ¸¸µç´Ù.
+		// ì±—ì½”ë“œê°€ ì¼ì¹˜í•˜ëŠ” ê²½ìš° ë‹¤ì‹œ ì±—ì½”ë“œë¥¼ ë§Œë“ ë‹¤.
 		if (!strcmp(ChatRoomList[i]->getChatCode().c_str(), str.c_str())) {
 			str.clear();
-			for (int j = 0; j < 6; j++) { // ÃªÄÚµå ÀçÀÛ¼º
+			for (int j = 0; j < 6; j++) { // ì±—ì½”ë“œ ì¬ì‘ì„±
 				str = str + (char)('A' + rand() % 26);
 			}
-			i = -1; // ´Ù½Ã 0¹øºÎÅÍ È®ÀÎ
+			i = -1; // ë‹¤ì‹œ 0ë²ˆë¶€í„° í™•ì¸
 			continue;
 		}
 	}
