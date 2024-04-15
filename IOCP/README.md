@@ -25,19 +25,35 @@ DB Injection Check
 - DB Injection에 사용되는 방법은 "와 같은 특수문자로 쿼리를 비트는 방법 외에도 SQL 예약어를 사용해서 시도하는 방법도 있다.
 # 문서
 ### 유즈케이스 다이어그램
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/usecase.png" width="500"><br/>
+
 
 ### 클래스 다이어그램
-1. Server <br/>
+#### Server <br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/ClassServerDefine.png" width="500"><br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/ClassServerNetwork.png" width="500"><br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/ClassServerRoom.png" width="500"><br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/ClassServerDB.png" width="500"><br/>
 
-2. Client <br/>
-### 패키지 다이어그램
+#### Client <br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/ClassClient.png" width="500"><br/>
 
 ### 시퀀스 다이어그램
-1. Sign <br/>
-2. EnterRoom<br/>
-3. Chat<br/>
-4. Run<br/>
-5. End<br/>
+#### 1. Sign <br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/SeqSign.png" width="500"><br/>
+
+#### 2. EnterRoom<br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/SeqEnterRoom.png" width="500"><br/>
+
+#### 3. Chat<br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/SeqChat.png" width="500"><br/>
+
+#### 4. Run<br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/SeqRun1.png" width="500"><br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/SeqRun2.png" width="500"><br/>
+
+#### 5. End<br/>
+<img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/SeqEnd.png" width="500"><br/>
 
 # 기능 <br/>
 ### 초기상태 : 로그인 화면 (SignInPage)
