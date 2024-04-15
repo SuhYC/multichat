@@ -45,18 +45,18 @@ int main() {
     if (connect(s, reinterpret_cast<SOCKADDR*>(&target), sizeof(target)) == SOCKET_ERROR)
     {
         cout << "connect() error : " << WSAGetLastError() << endl;
-        cout << "¼­¹ö ¿¡·¯." << endl;
+        cout << "ì„œë²„ ì—ëŸ¬." << endl;
         WSACleanup();
         return 0; //Couldn't connect
     }
     
     std::string str = "12345678901";
     while (str.size() > 10) {
-        cout << "ÀÌ¸§À» ÀÔ·ÂÇØÁÖ¼¼¿ä (10ÀÚ ¹Ì¸¸)" << endl;
+        cout << "ì´ë¦„ì„ ì…ë ¥í•´ì£¼ì„¸ìš” (10ì ë¯¸ë§Œ)" << endl;
         std::cin >> str;
     }
     
-    std::cin.ignore(); // '\n'ÀÌ ³²¾ÆÀÖ¾î¼­ cinÀÇ Ã¹ ¹®ÀÚ¸¦ Áö¿ò
+    std::cin.ignore(); // '\n'ì´ ë‚¨ì•„ìˆì–´ì„œ cinì˜ ì²« ë¬¸ìë¥¼ ì§€ì›€
     name = "[" + str + "]";
 
     std::thread recv_t(recv_msg, (void*)&s);
@@ -79,27 +79,27 @@ void* recv_msg(void* s) {
 
     while (true) {
         str_len = recv(sock, buf, 350, 0);
-        if (str_len == -1) { // ¼­¹ö ¹× ³×Æ®¿öÅ© ¹®Á¦
+        if (str_len == -1) { // ì„œë²„ ë° ë„¤íŠ¸ì›Œí¬ ë¬¸ì œ
             cout << "disconnected" << endl;
             return NULL;
         }
 
-        buf[str_len] = 0; // ¾²±â ÆíÇÏ°Ô stringÀ¸·Î ¸¸µé±â
+        buf[str_len] = 0; // ì“°ê¸° í¸í•˜ê²Œ stringìœ¼ë¡œ ë§Œë“¤ê¸°
         msg = std::string(buf);
 
         mu.lock();
 
-        if (chatcode.empty()) { // Âü¿©ÁßÀÎ Ã¤ÆÃ¹æÀÌ ¾ø´Â °æ¿ì
-            if (msg.size() == 6) { // Ã¤ÆÃ¹æ ÄÚµå¸¦ ¼­¹ö·ÎºÎÅÍ ¹ŞÀ½ == Á¤»óÀûÀ¸·Î Ã¤ÆÃ¹æ¿¡ Âü¿©ÇÔ
+        if (chatcode.empty()) { // ì°¸ì—¬ì¤‘ì¸ ì±„íŒ…ë°©ì´ ì—†ëŠ” ê²½ìš°
+            if (msg.size() == 6) { // ì±„íŒ…ë°© ì½”ë“œë¥¼ ì„œë²„ë¡œë¶€í„° ë°›ìŒ == ì •ìƒì ìœ¼ë¡œ ì±„íŒ…ë°©ì— ì°¸ì—¬í•¨
                 chatcode = msg;
                 system("cls");
-                cout << "³» ´Ğ³×ÀÓ : " << name  << endl << "ÇöÀç Âü¿©ÁßÀÎ Ã¤ÆÃ¹æ ÄÚµå : " << chatcode << "\n" << endl;
+                cout << "ë‚´ ë‹‰ë„¤ì„ : " << name  << endl << "í˜„ì¬ ì°¸ì—¬ì¤‘ì¸ ì±„íŒ…ë°© ì½”ë“œ : " << chatcode << "\n" << endl;
             }
-            else if(!strcmp(msg.c_str(),"fail")) { // Ã¤ÆÃ¹æ ÄÚµå Æ²¸²
-                cout << "ÄÚµå°¡ ÀÏÄ¡ÇÏ´Â Ã¤ÆÃ¹æÀÌ ¾ø½À´Ï´Ù." << endl;
+            else if(!strcmp(msg.c_str(),"fail")) { // ì±„íŒ…ë°© ì½”ë“œ í‹€ë¦¼
+                cout << "ì½”ë“œê°€ ì¼ì¹˜í•˜ëŠ” ì±„íŒ…ë°©ì´ ì—†ìŠµë‹ˆë‹¤." << endl;
             }
         }
-        else { // ¼ö½ÅÇÑ Ã¤ÆÃ ¶ç¿ì±â
+        else { // ìˆ˜ì‹ í•œ ì±„íŒ… ë„ìš°ê¸°
             cout << msg << endl;
         }
 
@@ -117,33 +117,33 @@ void* send_msg(void* s) {
 
     while (true) {
         std::getline(std::cin, msg);
-        if (!strcmp(msg.c_str(), "q") || !strcmp(msg.c_str(), "Q")) { // ³ª°¡±â ÀÔ·Â (Ã¤ÆÃ¹æ -> ·Îºñ || ·Îºñ -> Á¢¼ÓÁ¾·á)
+        if (!strcmp(msg.c_str(), "q") || !strcmp(msg.c_str(), "Q")) { // ë‚˜ê°€ê¸° ì…ë ¥ (ì±„íŒ…ë°© -> ë¡œë¹„ || ë¡œë¹„ -> ì ‘ì†ì¢…ë£Œ)
             mu.lock();
-            if (chatcode.empty()) { // (·Îºñ -> Á¢¼ÓÁ¾·á)
+            if (chatcode.empty()) { // (ë¡œë¹„ -> ì ‘ì†ì¢…ë£Œ)
                 mu.unlock();
                 closesocket(sock);
                 exit(0);
             }
-            else { // (Ã¤ÆÃ¹æ -> ·Îºñ), Ã¤ÆÃ¹æ Âü¿©¿Í´Â ´Ş¸® ¼­¹öÀÇ ÀÀ´äÀ» ±â´Ù¸± ÇÊ¿ä°¡ ¾ø´Ù.
+            else { // (ì±„íŒ…ë°© -> ë¡œë¹„), ì±„íŒ…ë°© ì°¸ì—¬ì™€ëŠ” ë‹¬ë¦¬ ì„œë²„ì˜ ì‘ë‹µì„ ê¸°ë‹¤ë¦´ í•„ìš”ê°€ ì—†ë‹¤.
                 chatcode = "";
                 system("cls");
                 send(sock, "q", sizeof("q"), 0);
-                cout << "Âü¿©ÁßÀÎ Ã¤ÆÃ¹æÀÌ ¾ø½À´Ï´Ù. »õ·Î¿î ¹æÀ» ¸¸µå½Ã°Å³ª Ã¤ÆÃ¹æ ÄÚµå¸¦ ÀÔ·ÂÇÏ¿© Âü¿©ÇÏ½Ê½Ã¿À." << endl;
+                cout << "ì°¸ì—¬ì¤‘ì¸ ì±„íŒ…ë°©ì´ ì—†ìŠµë‹ˆë‹¤. ìƒˆë¡œìš´ ë°©ì„ ë§Œë“œì‹œê±°ë‚˜ ì±„íŒ…ë°© ì½”ë“œë¥¼ ì…ë ¥í•˜ì—¬ ì°¸ì—¬í•˜ì‹­ì‹œì˜¤." << endl;
                 mu.unlock();
                 continue;
             }
         }
 
-        if (chatcode.empty()) { // »õ Ã¤ÆÃ¹æ ¸¸µé±â È¤Àº Âü¿©ÇÏ±â
+        if (chatcode.empty()) { // ìƒˆ ì±„íŒ…ë°© ë§Œë“¤ê¸° í˜¹ì€ ì°¸ì—¬í•˜ê¸°
             send(sock, msg.c_str(), sizeof(msg.c_str()), 0);
             continue;
         }
 
-        // ¿©±âºÎÅÍ´Â Ã¤ÆÃ ±â´É
+        // ì—¬ê¸°ë¶€í„°ëŠ” ì±„íŒ… ê¸°ëŠ¥
 
         msg = name + " : " + msg;
         if (msg.size() > 300) {
-            cout << "³Ê¹« ±è." << endl;
+            cout << "ë„ˆë¬´ ê¹€." << endl;
             continue;
         }
         send(sock, msg.c_str(), sizeof(msg), 0);
