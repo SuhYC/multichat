@@ -41,14 +41,14 @@ int main() {
     if (connect(s, reinterpret_cast<SOCKADDR*>(&target), sizeof(target)) == SOCKET_ERROR)
     {
         cout << "connect() error : " << WSAGetLastError() << endl;
-        cout << "¼­¹ö ¿¡·¯." << endl;
+        cout << "ì„œë²„ ì—ëŸ¬." << endl;
         WSACleanup();
         return 0; //Couldn't connect
     }
     
     std::string str = "12345678901";
     while (str.size() > 10) {
-        cout << "ÀÌ¸§À» ÀÔ·ÂÇØÁÖ¼¼¿ä (10ÀÚ ¹Ì¸¸)" << endl;
+        cout << "ì´ë¦„ì„ ìž…ë ¥í•´ì£¼ì„¸ìš” (10ìž ë¯¸ë§Œ)" << endl;
         std::cin >> str;
     }
     
@@ -101,7 +101,7 @@ void* send_msg(void* s) {
         }
         msg = name + " : " + msg;
         if (msg.size() > 300) {
-            cout << "³Ê¹« ±è." << endl;
+            cout << "ë„ˆë¬´ ê¹€." << endl;
             continue;
         }
         send(sock, msg.c_str(), sizeof(msg), 0);
