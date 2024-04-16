@@ -1,6 +1,6 @@
 # multichat
 cpp project <br/>
-기존 Blocking Socket 버전을 IOCP로 다시 만들었다.<br/>
+[기존 Blocking Socket 버전](https://github.com/SuhYC/multichat/tree/main/BlockingSocket)을 IOCP로 다시 만들었다.<br/>
 
 # 요약
 TCP <br/>
