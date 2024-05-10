@@ -5,7 +5,7 @@
 #include "Define.h"
 #include <iostream>
 #include <mutex>
-#include <deque>
+#include <queue>
 
 
 class ClientInfo
@@ -21,8 +21,12 @@ public:
 	void SetChatRoom(INT32 index_) { mChatRoomIndex = index_; }
 	void SetNickname(std::string nickname_) { mNickname = nickname_; }
 
-	void Init(const UINT32 index, HANDLE mIOCPHandle_);
 	ClientInfo()
+	{
+		mIndex = -1;
+	}
+
+	ClientInfo(const UINT32 index_, HANDLE mIOCPHandle_)
 	{
 		ZeroMemory(&mAcceptBuf, 64);
 		ZeroMemory(&mRecvBuf, MAX_SOCKBUF);
@@ -31,6 +35,10 @@ public:
 		mIOCPHandle = INVALID_HANDLE_VALUE;
 		mSocket = INVALID_SOCKET;
 		mChatRoomIndex = -1;
+
+		mIndex = index_;
+		mIOCPHandle = mIOCPHandle_;
+		mRecvOverlappedEx.SessionIndex = mIndex;
 	}
 
 	//WSARecv Overlapped I/O 작업을 시킨다.
@@ -40,7 +48,7 @@ public:
 	bool OnConnect(HANDLE IOCPHandle_, SOCKET socket_);
 	bool BindIOCompletionPort(HANDLE iocpHandle_);
 	void Close(bool bIsForce = false);
-	bool SendMsg(const UINT32 dataSize_, char* pMsg_);
+	bool SendMsg(const UINT32 dataSize_, std::shared_ptr<char>& pMsg_);
 	void SendCompleted(const UINT32 dataSize_);
 
 private:
@@ -62,7 +70,7 @@ private:
 	std::string mNickname;
 
 	std::mutex mSendLock;
-	std::deque<stOverlappedEx*> mSendDataQueue;
+	std::queue<std::shared_ptr<stOverlappedEx>> mSendDataQueue;
 
 	void MyAccept(SOCKET& socket_, GUID guid_);
 	LPFN_ACCEPTEX g_accept;

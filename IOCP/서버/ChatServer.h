@@ -97,7 +97,7 @@ private:
 		else if (client->GetChatRoom() != -1)
 		{
 
-			ChatRoom* chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
+			std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
 
 			// 채팅방 나가기 요청
 			if (!strcmp(pData, "/Q") || !strcmp(pData, "/q"))
@@ -120,7 +120,7 @@ private:
 			// 채팅방 개설 요청
 			if (!strcmp(pData, "/N") || !strcmp(pData, "/n"))
 			{
-				ChatRoom* chatRoom = mRoomManager.GetEmptyRoom();
+				std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetEmptyRoom();
 
 				if (chatRoom == nullptr)
 				{
@@ -145,7 +145,7 @@ private:
 			{
 				std::string code(pData);
 
-				ChatRoom* chatRoom = mRoomManager.GetChatRoomByCode(code);
+				std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetChatRoomByCode(code);
 
 				if (chatRoom == nullptr)
 				{
@@ -174,7 +174,7 @@ private:
 		std::cout << "[OnClose] Socket(" << clientIndex_ << ")\n";
 
 		auto client = GetClientInfo(clientIndex_);
-		ChatRoom* chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
+		std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
 
 		if (chatRoom != nullptr)
 		{
@@ -190,14 +190,16 @@ private:
 
 	// 새롭게 클라이언트에게 전송할 데이터를 큐에 적재해두었다가 전송
 	void ProcessPacket();
-	// 전송할 데이터를 하나 가져옴
-	PacketData* DequePacketData();
 	// DB처리할 데이터를 파악하고 요청하는 함수
 	std::string CallDB(std::string str_);
 	// const char*형 데이터를 클라이언트에게 전달할 패킷으로 만들어 적재하는 함수
 	void PushPacket(UINT32 clientIndex_, const char* data_);
 	// string형 데이터를 클라이언트에게 전달할 패킷으로 만들어 적재하는 함수
 	void PushPacket(UINT32 clientIndex_, std::string data_);
+
+	// 브로드캐스팅을 위해 공유포인터 사용.
+	void PushPacket(UINT32 clientIndex_, UINT32 len_, std::shared_ptr<char> sp_);
+
 	// 해당 채팅방의 모든유저에게 메시지 전달. 주로 공지메시지
 	void SendToAllUser(ChatRoom& chatroom_, std::string data_);
 	// 해당 채팅방의 모든유저에게 메시지 전달. 주로 채팅
@@ -210,7 +212,7 @@ private:
 
 	std::mutex mLock;
 
-	std::deque<PacketData*> mPacketDataQueue;
+	std::queue<std::shared_ptr<PacketData>> mPacketDataQueue;
 
 	RoomManager mRoomManager;
 	DataBase mDataBase;

@@ -1,10 +1,9 @@
 #include "ClientInfo.h"
 
-void ClientInfo::Init(const UINT32 index, HANDLE iocpHandle_)
+void overlapped_deleter(stOverlappedEx* ptr)
 {
-	mIndex = index;
-	mIOCPHandle = iocpHandle_;
-	mRecvOverlappedEx.SessionIndex = mIndex;
+	delete[] ptr->m_wsaBuf.buf;
+	delete ptr;
 }
 
 void ClientInfo::MyAccept(SOCKET& socket_, GUID guid_)
@@ -20,7 +19,7 @@ bool ClientInfo::PostAccept(SOCKET listenSock_, const UINT64 curTimeSec_)
 {
 	mLatestClosedTimeSec = curTimeSec_;
 
-	// ì†Œì¼“ ìƒì„±
+	// ¼ÒÄÏ »ı¼º
 	mSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
 	if (mSocket == INVALID_SOCKET)
@@ -36,8 +35,7 @@ bool ClientInfo::PostAccept(SOCKET listenSock_, const UINT64 curTimeSec_)
 	mAcceptContext.m_wsaBuf.buf = nullptr;
 	mAcceptContext.m_eOperation = eIOOperation::ACCEPT;
 	mAcceptContext.SessionIndex = mIndex;
-	
-	// í•¨ìˆ˜í¬ì¸í„°
+
 	MyAccept(mSocket, WSAID_ACCEPTEX);
 
 	if (g_accept(listenSock_, mSocket, mAcceptBuf, 0,
@@ -45,9 +43,9 @@ bool ClientInfo::PostAccept(SOCKET listenSock_, const UINT64 curTimeSec_)
 	{
 		int errcode = WSAGetLastError();
 
-		if (errcode != WSA_IO_PENDING) // WSA_IO_PENDINGì€ ì„±ê³µì ìœ¼ë¡œ overlapped operationì„ ì‹œì‘í•¨, ë‚˜ì¤‘ì— ì™„ë£Œ
+		if (errcode != WSA_IO_PENDING) // WSA_IO_PENDINGÀº ¼º°øÀûÀ¸·Î overlapped operationÀ» ½ÃÀÛÇÔ, ³ªÁß¿¡ ¿Ï·á
 		{
-			std::cerr << "[ì—ëŸ¬] AcceptEx : " << errcode << "\n";
+			std::cerr << "[¿¡·¯] AcceptEx : " << errcode << "\n";
 			return false;
 		}
 	}
@@ -81,7 +79,7 @@ bool ClientInfo::BindRecv()
 	DWORD dwFlag = 0;
 	DWORD dwRecvNumBytes = 0;
 
-	//Overlapped I/Oì„ ìœ„í•´ ê° ì •ë³´ë¥¼ ì…‹íŒ…í•´ ì¤€ë‹¤.
+	//Overlapped I/OÀ» À§ÇØ °¢ Á¤º¸¸¦ ¼ÂÆÃÇØ ÁØ´Ù.
 	mRecvOverlappedEx.m_wsaBuf.len = MAX_SOCKBUF;
 	mRecvOverlappedEx.m_wsaBuf.buf = mRecvBuf;
 	mRecvOverlappedEx.m_eOperation = eIOOperation::RECV;
@@ -94,10 +92,10 @@ bool ClientInfo::BindRecv()
 		(LPWSAOVERLAPPED) & (mRecvOverlappedEx),
 		NULL);
 
-	//socket_errorì´ë©´ client socketì´ ëŠì–´ì§„ê±¸ë¡œ ì²˜ë¦¬í•œë‹¤.
+	//socket_errorÀÌ¸é client socketÀÌ ²÷¾îÁø°É·Î Ã³¸®ÇÑ´Ù.
 	if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
 	{
-		std::cerr << "[ì—ëŸ¬] ClientInfo::BindRecv : WSARecv()í•¨ìˆ˜ ì‹¤íŒ¨" <<  WSAGetLastError() << '\n';
+		std::cerr << "[¿¡·¯] ClientInfo::BindRecv : WSARecv()ÇÔ¼ö ½ÇÆĞ" <<  WSAGetLastError() << '\n';
 		return false;
 	}
 
@@ -124,7 +122,7 @@ bool ClientInfo::BindIOCompletionPort(HANDLE iocpHandle_)
 
 	if (hIOCP == INVALID_HANDLE_VALUE)
 	{
-		std::cerr << "[ì—ëŸ¬] ClientInfo::BindIOCompletionPort : CreateIoCompletionPort()í•¨ìˆ˜ ì‹¤íŒ¨" <<  GetLastError() << '\n';
+		std::cerr << "[¿¡·¯] ClientInfo::BindIOCompletionPort : CreateIoCompletionPort()ÇÔ¼ö ½ÇÆĞ" <<  GetLastError() << '\n';
 		return false;
 	}
 
@@ -133,9 +131,9 @@ bool ClientInfo::BindIOCompletionPort(HANDLE iocpHandle_)
 
 void ClientInfo::Close(bool bIsForce)
 {
-	struct linger stLinger = { 0, 0 };	// SO_DONTLINGERë¡œ ì„¤ì •
+	struct linger stLinger = { 0, 0 };	// SO_DONTLINGER·Î ¼³Á¤
 
-	// bIsForceê°€ trueì´ë©´ SO_LINGER, timeout = 0ìœ¼ë¡œ ì„¤ì •í•˜ì—¬ ê°•ì œ ì¢…ë£Œ ì‹œí‚¨ë‹¤. ì£¼ì˜ : ë°ì´í„° ì†ì‹¤ì´ ìˆì„ìˆ˜ ìˆìŒ 
+	// bIsForce°¡ trueÀÌ¸é SO_LINGER, timeout = 0À¸·Î ¼³Á¤ÇÏ¿© °­Á¦ Á¾·á ½ÃÅ²´Ù. ÁÖÀÇ : µ¥ÀÌÅÍ ¼Õ½ÇÀÌ ÀÖÀ»¼ö ÀÖÀ½ 
 	if (bIsForce)
 	{
 		stLinger.l_onoff = 1;
@@ -144,13 +142,13 @@ void ClientInfo::Close(bool bIsForce)
 	mIsConnect = 0;
 	mLatestClosedTimeSec = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-	//socketCloseì†Œì¼“ì˜ ë°ì´í„° ì†¡ìˆ˜ì‹ ì„ ëª¨ë‘ ì¤‘ë‹¨ ì‹œí‚¨ë‹¤.
+	//socketClose¼ÒÄÏÀÇ µ¥ÀÌÅÍ ¼Û¼ö½ÅÀ» ¸ğµÎ Áß´Ü ½ÃÅ²´Ù.
 	shutdown(mSocket, SD_BOTH);
 
-	//ì†Œì¼“ ì˜µì…˜ì„ ì„¤ì •í•œë‹¤.
+	//¼ÒÄÏ ¿É¼ÇÀ» ¼³Á¤ÇÑ´Ù.
 	setsockopt(mSocket, SOL_SOCKET, SO_LINGER, (char*)&stLinger, sizeof(stLinger));
 
-	//ì†Œì¼“ ì—°ê²°ì„ ì¢…ë£Œ ì‹œí‚¨ë‹¤. 
+	//¼ÒÄÏ ¿¬°áÀ» Á¾·á ½ÃÅ²´Ù. 
 	closesocket(mSocket);
 
 	mSocket = INVALID_SOCKET;
@@ -158,22 +156,24 @@ void ClientInfo::Close(bool bIsForce)
 	return;
 }
 
-bool ClientInfo::SendMsg(const UINT32 dataSize_, char* pMsg_)
+bool ClientInfo::SendMsg(const UINT32 dataSize_, std::shared_ptr<char>& pMsg_)
 {
-	auto sendOverlappedEx = new stOverlappedEx;
-	ZeroMemory(sendOverlappedEx, sizeof(stOverlappedEx));
+	std::shared_ptr<stOverlappedEx> sendOverlappedEx(new stOverlappedEx, overlapped_deleter);
+	ZeroMemory(sendOverlappedEx.get(), sizeof(stOverlappedEx));
 
 	sendOverlappedEx->m_wsaBuf.len = dataSize_;
 	sendOverlappedEx->m_wsaBuf.buf = new char[dataSize_];
-	CopyMemory(sendOverlappedEx->m_wsaBuf.buf, pMsg_, dataSize_);
+
+	CopyMemory(sendOverlappedEx->m_wsaBuf.buf, pMsg_.get(), dataSize_);
+
 	sendOverlappedEx->m_eOperation = eIOOperation::SEND;
 	sendOverlappedEx->SessionIndex = mIndex;
 
 	std::lock_guard<std::mutex> guard(mSendLock); // 1-send
 
-	mSendDataQueue.push_back(sendOverlappedEx);
+	mSendDataQueue.emplace(std::move(sendOverlappedEx));
 
-	// 1Send
+	// ¹æ±İ ³ÖÀº µ¥ÀÌÅÍ°¡ ÀüºÎ´Ù. (ÀÌÀü¿¡ Àü¼ÛÁßÀÌ´ø µ¥ÀÌÅÍ°¡ ¾ø´Ù)
 	if (mSendDataQueue.size() == 1) 
 	{
 		SendIO();
@@ -186,12 +186,9 @@ void ClientInfo::SendCompleted(const UINT32 dataSize_)
 {
 	std::lock_guard<std::mutex> guard(mSendLock);
 
-	delete[] mSendDataQueue.front()->m_wsaBuf.buf;
-	delete mSendDataQueue.front();
+	mSendDataQueue.pop();
 
-	mSendDataQueue.pop_front();
-
-	// í•´ë‹¹ í´ë¼ì´ì–¸íŠ¸ì— ì „ì†¡ì‘ì—…ì„ í•˜ë˜ ìŠ¤ë ˆë“œê°€ ì´ì–´ì„œ ê³„ì† ì „ì†¡í•œë‹¤.
+	// ÇØ´ç Å¬¶óÀÌ¾ğÆ®¿¡ Àü¼ÛÀÛ¾÷À» ÇÏ´ø ½º·¹µå°¡ ÀÌ¾î¼­ °è¼Ó Àü¼ÛÇÑ´Ù.
 	if (!mSendDataQueue.empty()) 
 	{
 		SendIO();
@@ -202,7 +199,7 @@ void ClientInfo::SendCompleted(const UINT32 dataSize_)
 
 bool ClientInfo::SendIO()
 {
-	auto sendOverlappedEx = mSendDataQueue.front();
+	std::shared_ptr<stOverlappedEx> sendOverlappedEx = mSendDataQueue.front();
 
 	DWORD dwRecvNumBytes = 0;
 
@@ -211,13 +208,13 @@ bool ClientInfo::SendIO()
 		1,
 		&dwRecvNumBytes,
 		0,
-		(LPWSAOVERLAPPED)sendOverlappedEx,
+		(LPWSAOVERLAPPED)(sendOverlappedEx.get()),
 		NULL);
 
-	//socket_errorì´ë©´ client socketì´ ëŠì–´ì§„ê±¸ë¡œ ì²˜ë¦¬í•œë‹¤.
+	//socket_errorÀÌ¸é client socketÀÌ ²÷¾îÁø°É·Î Ã³¸®ÇÑ´Ù.
 	if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
 	{
-		std::cerr << "[ì—ëŸ¬] WSASend()í•¨ìˆ˜ ì‹¤íŒ¨ : " << WSAGetLastError() << "\n";
+		std::cerr << "[¿¡·¯] WSASend()ÇÔ¼ö ½ÇÆĞ : " << WSAGetLastError() << "\n";
 		return false;
 	}
 

@@ -84,12 +84,14 @@ bool IOCompletionPort::StartServer(const UINT32 maxClientCount)
 	CreateClient();
 
 	bool bRet = CreateWorkerThread();
-	if (!bRet) {
+	if (!bRet)
+	{
 		return false;
 	}
 
 	bRet = CreateAccepterThread();
-	if (!bRet) {
+	if (!bRet)
+	{
 		return false;
 	}
 
@@ -122,9 +124,9 @@ void IOCompletionPort::DestroyThread()
 	return;
 }
 
-bool IOCompletionPort::SendMsg(const UINT32 sessionIndex_, const UINT32 dataSize_, char* pData)
+bool IOCompletionPort::SendMsg(const UINT32 sessionIndex_, const UINT32 dataSize_, std::shared_ptr<char>& pData)
 {
-	auto pClient = GetClientInfo(sessionIndex_);
+	std::shared_ptr<ClientInfo> pClient = GetClientInfo(sessionIndex_);
 
 	if (pClient == nullptr)
 	{
@@ -135,25 +137,22 @@ bool IOCompletionPort::SendMsg(const UINT32 sessionIndex_, const UINT32 dataSize
 	return pClient->SendMsg(dataSize_, pData);
 }
 
-ClientInfo* IOCompletionPort::GetClientInfo(const UINT32 sessionIndex_)
+std::shared_ptr<ClientInfo> IOCompletionPort::GetClientInfo(const UINT32 sessionIndex_)
 {
 	if (sessionIndex_ >= mMaxClientCount)
 	{
-		std::cerr << "[에러] IOCP::GetClientInfo : 세션코드 부적합";
-		return nullptr;
+		std::cerr << "[에러] IOCP::GetClientInfo : 세션코드 부적합\n";
+		return std::shared_ptr<ClientInfo>(nullptr);
 	}
 
-	return mClientInfos[sessionIndex_];
+	return std::shared_ptr<ClientInfo>(mClientInfos[sessionIndex_]);
 }
 
 void IOCompletionPort::CreateClient()
 {
 	for (UINT32 i = 0; i < mMaxClientCount; ++i)
 	{
-		auto client = new ClientInfo();
-		client->Init(i, mIOCPHandle);
-
-		mClientInfos.push_back(client);
+		mClientInfos.emplace_back(std::make_shared<ClientInfo>(i, mIOCPHandle));
 	}
 
 	return;
@@ -214,7 +213,7 @@ void IOCompletionPort::WorkerThread()
 
 		// Overlapped구조체를 확장해서 어떤 IO요청이었는지 확인
 		stOverlappedEx* pOverlappedEx = (stOverlappedEx*)lpOverlapped;
-		pClientInfo = GetClientInfo(pOverlappedEx->SessionIndex);
+		pClientInfo = GetClientInfo(pOverlappedEx->SessionIndex).get();
 
 		//client가 접속을 끊었을때
 		if (pOverlappedEx->m_eOperation != eIOOperation::ACCEPT && (!bSuccess || (dwIoSize == 0 && bSuccess)))

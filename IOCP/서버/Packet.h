@@ -5,25 +5,18 @@ class PacketData
 public:
 	UINT32 SessionIndex = 0;
 	UINT32 DataSize = 0;
-	char* pPacketData = nullptr;
+	std::shared_ptr<char> pPacketData;
 
-	~PacketData() { delete pPacketData; }
-
-	void Set(PacketData& value)
+	PacketData()
 	{
-		SessionIndex = value.SessionIndex;
-		DataSize = value.DataSize;
-
-		pPacketData = new char[value.DataSize];
-		CopyMemory(pPacketData, value.pPacketData, value.DataSize);
+		pPacketData = nullptr;
 	}
 
-	void Set(UINT32 sessionIndex_, UINT32 dataSize_, char* pData)
+	PacketData(UINT32 sessionIndex_, UINT32 dataSize_, std::shared_ptr<char>& pData_)
 	{
 		SessionIndex = sessionIndex_;
 		DataSize = dataSize_;
-
-		pPacketData = new char[dataSize_];
-		CopyMemory(pPacketData, pData, dataSize_);
+		pPacketData = pData_;
 	}
+	~PacketData() { pPacketData.reset(); }
 };
