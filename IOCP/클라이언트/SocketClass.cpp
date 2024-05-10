@@ -1,5 +1,11 @@
 #include "SocketClass.h"
 
+void overlapped_deleter(stOverlappedEx* ptr)
+{
+	delete[] ptr->m_wsaBuf.buf;
+	delete ptr;
+}
+
 void SocketClass::ConnectEx(SOCKET& socket, GUID guid)
 {
 	DWORD dwbyte{ 0 };
@@ -20,7 +26,7 @@ bool SocketClass::InitSocket_Sync(const int port_, const char* ipAddress_)
 	nRet = WSAStartup(wVersionRequested, &wsaData);
 
 	if (nRet != 0) {
-		std::cerr << "[ÏóêÎü¨] SocketClass::InitSocket_Sync : WSAStartup error" << WSAGetLastError() << "\n";
+		std::cerr << "[ø°∑Ø] SocketClass::InitSocket_Sync : WSAStartup error" << WSAGetLastError() << "\n";
 		WSACleanup();
 		return false;
 	}
@@ -34,14 +40,14 @@ bool SocketClass::InitSocket_Sync(const int port_, const char* ipAddress_)
 
 	if (mSocket == INVALID_SOCKET)
 	{
-		std::cerr << "[ÏóêÎü¨] SocketClass::InitSocket_Sync : socket() error" << WSAGetLastError() << "\n";
+		std::cerr << "[ø°∑Ø] SocketClass::InitSocket_Sync : socket() error" << WSAGetLastError() << "\n";
 		WSACleanup();
 		return false; //Couldn't create the socket
 	}
 
 	if (connect(mSocket, reinterpret_cast<SOCKADDR*>(&server), sizeof(server)) == SOCKET_ERROR)
 	{
-		std::cerr << "[ÏóêÎü¨] SocketClass::InitSocket_Sync : connect() error" << WSAGetLastError() << "\n";
+		std::cerr << "[ø°∑Ø] SocketClass::InitSocket_Sync : connect() error" << WSAGetLastError() << "\n";
 		WSACleanup();
 		return false; //Couldn't connect
 	}
@@ -64,7 +70,7 @@ bool SocketClass::InitSocket(const int port_, const char* ipAddress_)
 	WSADATA wsadata;
 	if (WSAStartup(MAKEWORD(2, 2), &wsadata) != 0)
 	{
-		std::cerr << "[ÏóêÎü¨] SocketClass::InitSocket : WSAStartup error\n";
+		std::cerr << "[ø°∑Ø] SocketClass::InitSocket : WSAStartup error\n";
 		WSACleanup();
 		return false;
 	}
@@ -79,7 +85,7 @@ bool SocketClass::InitSocket(const int port_, const char* ipAddress_)
 	mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (bind(mSocket, reinterpret_cast<sockaddr*>(&server),
 		sizeof(server)) == SOCKET_ERROR) {
-		std::cerr << "[ÏóêÎü¨] SocketClass::InitSocket : bind error" << GetLastError() << "\n";
+		std::cerr << "[ø°∑Ø] SocketClass::InitSocket : bind error" << GetLastError() << "\n";
 		closesocket(mSocket);
 		WSACleanup();
 		return false;
@@ -89,21 +95,19 @@ bool SocketClass::InitSocket(const int port_, const char* ipAddress_)
 	mIOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, MAX_THREAD_NUM);
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(mSocket), mIOCPHandle, 0, 0);
 
-	auto over_ex = new stOverlappedEx;
-	ZeroMemory(over_ex, sizeof(stOverlappedEx));
-	over_ex->m_eOperation = eIOOperation::CONNECT;
+	ZeroMemory(&mConnectOverlappedEx, sizeof(stOverlappedEx));
+	mConnectOverlappedEx.m_eOperation = eIOOperation::CONNECT;
 	server.sin_port = htons(port_);
 	inet_pton(AF_INET, ipAddress_, &(server.sin_addr.s_addr));
 
-	// Ìï®ÏàòÌè¨Ïù∏ÌÑ∞
 	ConnectEx(mSocket, WSAID_CONNECTEX);
 	if (g_connect(mSocket, reinterpret_cast<SOCKADDR*>(&server),
 		sizeof(server), NULL, NULL, NULL,
-		reinterpret_cast<LPOVERLAPPED>(over_ex)) == FALSE) {
+		reinterpret_cast<LPOVERLAPPED> (&mConnectOverlappedEx)) == FALSE) {
 
 		auto error = GetLastError();
 		if (error != WSA_IO_PENDING) {
-			std::cerr << "[ÏóêÎü¨] SocketClass::InitSocket : ConnectEx Error" << error << "\n";
+			std::cerr << "[ø°∑Ø] SocketClass::InitSocket : ConnectEx Error" << error << "\n";
 			closesocket(mSocket);
 			WSACleanup();
 			return false;
@@ -113,7 +117,7 @@ bool SocketClass::InitSocket(const int port_, const char* ipAddress_)
 	int nRet = setsockopt(mSocket, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
 	if (nRet != 0)
 	{
-		std::cerr << "[ÏóêÎü¨] SocketClass::InitSocket : setsockopt Error" << WSAGetLastError() << "\n";
+		std::cerr << "[ø°∑Ø] SocketClass::InitSocket : setsockopt Error" << WSAGetLastError() << "\n";
 		return false;
 	}
 
@@ -191,11 +195,10 @@ void SocketClass::WorkerThread()
 
 		if (pOverlappedEx->m_eOperation == eIOOperation::CONNECT)
 		{
-			delete pOverlappedEx;
-			// ÏàòÏã† Í∞ÄÎä•ÏúºÎ°ú ÏÑ§Ï†ï
+			// ºˆΩ≈ ∞°¥…¿∏∑Œ º≥¡§
 			BindRecv();
 
-			// Ïó∞Í≤∞ÏôÑÎ£å ÎÑ§Ìä∏ÏõåÌÅ¨Ìï®Ïàò Ìò∏Ï∂ú
+			// ø¨∞·øœ∑· ≥◊∆Æøˆ≈©«‘ºˆ »£√‚
 			OnConnect();
 		}
 		else if (pOverlappedEx->m_eOperation == eIOOperation::RECV)
@@ -204,14 +207,14 @@ void SocketClass::WorkerThread()
 
 			std::string str(pOverlappedEx->m_wsaBuf.buf);
 
-			// ÏàòÏã†ÏôÑÎ£å ÎÑ§Ìä∏ÏõåÌÅ¨Ìï®Ïàò Ìò∏Ï∂ú
+			// ºˆΩ≈øœ∑· ≥◊∆Æøˆ≈©«‘ºˆ »£√‚
 			OnReceive(str);
 
 			BindRecv();
 		}
 		else if (pOverlappedEx->m_eOperation == eIOOperation::SEND)
 		{
-			// ÏÜ°Ïã†ÏôÑÎ£å -> Îç∞Ïù¥ÌÑ∞Í∞Ä ÎÇ®ÏïÑÏûàÎã§Î©¥ Îçî ÏÜ°Ïã†
+			// º€Ω≈øœ∑· -> µ•¿Ã≈Õ∞° ≥≤æ∆¿÷¥Ÿ∏È ¥ı º€Ω≈
 			SendCompleted();
 		}
 	}
@@ -221,8 +224,8 @@ void SocketClass::WorkerThread()
 
 void SocketClass::SendMsg(std::string msg_)
 {
-	auto sendOverlappedEx = new stOverlappedEx;
-	ZeroMemory(sendOverlappedEx, sizeof(stOverlappedEx));
+	std::shared_ptr<stOverlappedEx> sendOverlappedEx(new stOverlappedEx, overlapped_deleter);
+	ZeroMemory(sendOverlappedEx.get(), sizeof(stOverlappedEx));
 
 	const char* msg = msg_.c_str();
 	size_t dataSize = strlen(msg);
@@ -234,9 +237,8 @@ void SocketClass::SendMsg(std::string msg_)
 
 	std::lock_guard<std::mutex> guard(mLock);
 
-	mSendDataQueue.push(sendOverlappedEx);
+	mSendDataQueue.emplace(std::move(sendOverlappedEx));
 
-	// 1Send
 	if (mSendDataQueue.size() == 1)
 	{
 		SendIO();
@@ -247,7 +249,7 @@ void SocketClass::SendMsg(std::string msg_)
 
 void SocketClass::SendIO()
 {
-	stOverlappedEx* sendOverlappedEx = mSendDataQueue.front();
+	std::shared_ptr<stOverlappedEx> sendOverlappedEx = mSendDataQueue.front();
 
 	DWORD dwRecvNumBytes = 0;
 
@@ -256,12 +258,12 @@ void SocketClass::SendIO()
 		1,
 		&dwRecvNumBytes,
 		0,
-		(LPWSAOVERLAPPED)sendOverlappedEx,
+		(LPWSAOVERLAPPED)(sendOverlappedEx.get()),
 		NULL);
 
 	if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
 	{
-		std::cerr << "[ÏóêÎü¨] WSASend() Ìï®Ïàò Ïã§Ìå® : " << WSAGetLastError() << "\n";
+		std::cerr << "[ø°∑Ø] WSASend() «‘ºˆ Ω«∆– : " << WSAGetLastError() << "\n";
 	}
 
 	return;
@@ -270,9 +272,6 @@ void SocketClass::SendIO()
 void SocketClass::SendCompleted()
 {
 	std::lock_guard<std::mutex> guard(mLock);
-
-	delete[] mSendDataQueue.front()->m_wsaBuf.buf;
-	delete mSendDataQueue.front();
 
 	mSendDataQueue.pop();
 
@@ -289,7 +288,7 @@ bool SocketClass::BindRecv()
 	DWORD dwFlag = 0;
 	DWORD dwRecvNumBytes = 0;
 
-	//Overlapped I/OÏùÑ ÏúÑÌï¥ Í∞Å Ï†ïÎ≥¥Î•º ÏÑ∏ÌåÖÌï¥ Ï§ÄÎã§.
+	//Overlapped I/O¿ª ¿ß«ÿ ∞¢ ¡§∫∏∏¶ ºº∆√«ÿ ¡ÿ¥Ÿ.
 	mRecvOverlappedEx.m_wsaBuf.len = MAX_SOCK_BUF;
 	mRecvOverlappedEx.m_wsaBuf.buf = mRecvBuf;
 	mRecvOverlappedEx.m_eOperation = eIOOperation::RECV;
@@ -302,10 +301,10 @@ bool SocketClass::BindRecv()
 		(LPWSAOVERLAPPED) & (mRecvOverlappedEx),
 		NULL);
 
-	//socket_errorÏù¥Î©¥ client socketÏù¥ ÎÅäÏñ¥ÏßÑÍ±∏Î°ú Ï≤òÎ¶¨ÌïúÎã§.
+	//socket_error¿Ã∏È client socket¿Ã ≤˜æÓ¡¯∞…∑Œ √≥∏Æ«—¥Ÿ.
 	if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
 	{
-		std::cerr << "[ÏóêÎü¨] SocketClass::BindRecv : WSARecv() error" << WSAGetLastError() << "\n";
+		std::cerr << "[ø°∑Ø] SocketClass::BindRecv : WSARecv() error" << WSAGetLastError() << "\n";
 		return false;
 	}
 

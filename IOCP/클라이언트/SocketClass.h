@@ -40,11 +40,11 @@ private:
 	void CreateWorkerThread();
 	// 워커스레드
 	void WorkerThread();
-	//
+	// 비동기 송신 요청
 	void SendIO();
-	//
+	// 비동기 송신 완료 후 처리
 	void SendCompleted();
-
+	// 비동기 수신 요청
 	bool BindRecv();
 
 	// 메시지가 수신되었을 때 수신한 메시지를 파라미터로 호출되는 함수.
@@ -59,7 +59,8 @@ private:
 	SOCKET mSocket;
 
 	std::queue<std::string> mSendQueue;
-	std::queue<stOverlappedEx*> mSendDataQueue;
+	std::queue<std::shared_ptr<stOverlappedEx>> mSendDataQueue;
+	stOverlappedEx mConnectOverlappedEx;
 	stOverlappedEx mRecvOverlappedEx;
 	char mRecvBuf[MAX_SOCK_BUF];
 	std::mutex mLock;
