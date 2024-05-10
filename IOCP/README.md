@@ -23,6 +23,8 @@ DB Injection Check
 - Windows.h 헤더는 소켓통신과 같이 사용하려고 하면 에러가 발생할 수 있다. 구버전의 winsock이 windows헤더에 포함되어 있다. 반드시 winsock.h헤더 선언 이후에 windows.h헤더를 선언하자. (이 순서로 호출하면 #ifndef문에 의해 중복으로 선언되는 것을 막을 수 있다.)
 ## 4. DB Injection
 - DB Injection에 사용되는 방법은 "와 같은 특수문자로 쿼리를 비트는 방법 외에도 SQL 예약어를 사용해서 시도하는 방법도 있다.
+## 5. smart_pointer
+- 원시포인터로 패킷을 구성하면 session 하나당 하나의 패킷이 구성되어야 하지만 RefCount를 이용해 하나의 패킷으로 여러개의 client에 메시지를 보낼 수 있다. 해당 패킷이 사용되는 마지막 메시지에서 패킷을 정리한다.
 # 문서
 ### 유즈케이스 다이어그램
 <img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/usecase.png" width="500"><br/>
