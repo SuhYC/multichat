@@ -241,9 +241,16 @@ void ChatServer::SendToAllUser(ChatRoom& chatroom_, std::string nickname_, std::
 
 void ChatServer::SendToAllUser(ChatRoom& chatroom_, std::string data_)
 {
+	std::string str = std::to_string(data_.size()) + data_;
+	UINT32 len = strlen(str.c_str());
+
+	char* msg = strcpy(new char[len + 1], str.c_str());
+
+	std::shared_ptr<char> data(msg, packet_deleter);
+
 	for (auto otherUserIndex : chatroom_.GetUserList())
 	{
-		PushPacket(otherUserIndex, data_);
+		PushPacket(otherUserIndex, len, data);
 	}
 
 	return;
