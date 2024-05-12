@@ -49,21 +49,7 @@ void ChatServer::ProcessPacket()
 {
 	while (mIsRunProcessThread)
 	{
-		std::shared_ptr<PacketData> packetData;
-
-		{
-			std::lock_guard<std::mutex> guard(mLock);
-
-			if (mPacketDataQueue.empty())
-			{
-				packetData = nullptr;
-			}
-			else
-			{
-				packetData = mPacketDataQueue.front();
-				mPacketDataQueue.pop();
-			}
-		}
+		std::shared_ptr<PacketData> packetData(DequePacket());
 
 		if (packetData != nullptr)
 		{
@@ -76,6 +62,21 @@ void ChatServer::ProcessPacket()
 	}
 
 	return;
+}
+
+std::shared_ptr<PacketData> ChatServer::DequePacket()
+{
+	std::lock_guard<std::mutex> guard(mLock);
+
+	if (mPacketDataQueue.empty())
+	{
+		return std::shared_ptr<PacketData>(nullptr);
+	}
+
+	std::shared_ptr<PacketData> ret(mPacketDataQueue.front());
+	mPacketDataQueue.pop();
+
+	return std::shared_ptr<PacketData>(ret);
 }
 
 std::string ChatServer::CallDB(std::string str_)

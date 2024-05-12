@@ -190,6 +190,8 @@ private:
 
 	// 새롭게 클라이언트에게 전송할 데이터를 큐에 적재해두었다가 전송
 	void ProcessPacket();
+	// 전송할 데이터를 하나씩 큐에서 가져오는 함수
+	std::shared_ptr<PacketData> DequePacket();
 	// DB처리할 데이터를 파악하고 요청하는 함수
 	std::string CallDB(std::string str_);
 	// const char*형 데이터를 클라이언트에게 전달할 패킷으로 만들어 적재하는 함수
