@@ -1,11 +1,5 @@
 #include "ClientInfo.h"
 
-void overlapped_deleter(stOverlappedEx* ptr)
-{
-	delete[] ptr->m_wsaBuf.buf;
-	delete ptr;
-}
-
 void ClientInfo::MyAccept(SOCKET& socket_, GUID guid_)
 {
 	DWORD dwbyte{ 0 };
@@ -156,22 +150,13 @@ void ClientInfo::Close(bool bIsForce)
 	return;
 }
 
-bool ClientInfo::SendMsg(const UINT32 dataSize_, std::shared_ptr<char>& pMsg_)
+bool ClientInfo::SendMsg(PacketData* packet_)
 {
-	std::shared_ptr<stOverlappedEx> sendOverlappedEx(new stOverlappedEx, overlapped_deleter);
-	ZeroMemory(sendOverlappedEx.get(), sizeof(stOverlappedEx));
-
-	sendOverlappedEx->m_wsaBuf.len = dataSize_;
-	sendOverlappedEx->m_wsaBuf.buf = new char[dataSize_];
-
-	CopyMemory(sendOverlappedEx->m_wsaBuf.buf, pMsg_.get(), dataSize_);
-
-	sendOverlappedEx->m_eOperation = eIOOperation::SEND;
-	sendOverlappedEx->SessionIndex = mIndex;
+	packet_->SetOverlapped();
 
 	std::lock_guard<std::mutex> guard(mSendLock); // 1-send
 
-	mSendDataQueue.emplace(std::move(sendOverlappedEx));
+	mSendDataQueue.push(packet_);
 
 	// 방금 넣은 데이터가 전부다. (이전에 전송중이던 데이터가 없다)
 	if (mSendDataQueue.size() == 1) 
@@ -186,6 +171,7 @@ void ClientInfo::SendCompleted(const UINT32 dataSize_)
 {
 	std::lock_guard<std::mutex> guard(mSendLock);
 
+	delete mSendDataQueue.front();
 	mSendDataQueue.pop();
 
 	// 해당 클라이언트에 전송작업을 하던 스레드가 이어서 계속 전송한다.
@@ -199,42 +185,22 @@ void ClientInfo::SendCompleted(const UINT32 dataSize_)
 
 bool ClientInfo::SendIO()
 {
-	std::shared_ptr<stOverlappedEx> sendOverlappedEx = mSendDataQueue.front();
+	PacketData* packet = mSendDataQueue.front();
 
 	DWORD dwRecvNumBytes = 0;
 
 	int nRet = WSASend(mSocket,
-		&(sendOverlappedEx->m_wsaBuf),
+		&(packet->sendOverlapped.m_wsaBuf),
 		1,
 		&dwRecvNumBytes,
 		0,
-		(LPWSAOVERLAPPED)(sendOverlappedEx.get()),
+		(LPWSAOVERLAPPED) & (packet->sendOverlapped),
 		NULL);
 
 	//socket_error이면 client socket이 끊어진걸로 처리한다.
 	if (nRet == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
 	{
 		std::cerr << "[에러] WSASend()함수 실패 : " << WSAGetLastError() << "\n";
-		return false;
-	}
-
-	return true;
-}
-
-bool ClientInfo::SetSocketOption()
-{
-	int opt = 1;
-	if (setsockopt(mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int)) == SOCKET_ERROR)
-	{
-		std::cerr << "[DEBUG] SO_RCVBUF change error: " << GetLastError() << '\n';
-		return false;
-	}
-
-	opt = 0;
-	if (setsockopt(mSocket, SOL_SOCKET, SO_RCVBUF, (const char*)&opt, sizeof(int)) == SOCKET_ERROR)
-	{
-		std::cerr << "[DEBUG] SO_RCVBUF change error: " << GetLastError() << "\n";
-
 		return false;
 	}
 

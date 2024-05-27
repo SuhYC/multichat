@@ -112,6 +112,11 @@ void IOCompletionPort::DestroyThread()
 		}
 	}
 
+	for (auto* clientInfo : mClientInfos)
+	{
+		delete clientInfo;
+	}
+
 	//Accepter 쓰레드 종료.
 	mIsAccepterRun = false;
 	closesocket(mListenSocket);
@@ -124,9 +129,9 @@ void IOCompletionPort::DestroyThread()
 	return;
 }
 
-bool IOCompletionPort::SendMsg(const UINT32 sessionIndex_, const UINT32 dataSize_, std::shared_ptr<char>& pData)
+bool IOCompletionPort::SendMsg(PacketData* packet_)
 {
-	std::shared_ptr<ClientInfo> pClient = GetClientInfo(sessionIndex_);
+	ClientInfo* pClient = GetClientInfo(packet_->SessionIndex);
 
 	if (pClient == nullptr)
 	{
@@ -134,25 +139,25 @@ bool IOCompletionPort::SendMsg(const UINT32 sessionIndex_, const UINT32 dataSize
 		return false;
 	}
 
-	return pClient->SendMsg(dataSize_, pData);
+	return pClient->SendMsg(packet_);
 }
 
-std::shared_ptr<ClientInfo> IOCompletionPort::GetClientInfo(const UINT32 sessionIndex_)
+ClientInfo* IOCompletionPort::GetClientInfo(const UINT32 sessionIndex_)
 {
 	if (sessionIndex_ >= mMaxClientCount)
 	{
 		std::cerr << "[에러] IOCP::GetClientInfo : 세션코드 부적합\n";
-		return std::shared_ptr<ClientInfo>(nullptr);
+		return nullptr;
 	}
 
-	return std::shared_ptr<ClientInfo>(mClientInfos[sessionIndex_]);
+	return mClientInfos[sessionIndex_];
 }
 
 void IOCompletionPort::CreateClient()
 {
 	for (UINT32 i = 0; i < mMaxClientCount; ++i)
 	{
-		mClientInfos.emplace_back(std::make_shared<ClientInfo>(i, mIOCPHandle));
+		mClientInfos.push_back(new ClientInfo(i, mIOCPHandle));
 	}
 
 	return;
@@ -213,7 +218,7 @@ void IOCompletionPort::WorkerThread()
 
 		// Overlapped구조체를 확장해서 어떤 IO요청이었는지 확인
 		stOverlappedEx* pOverlappedEx = (stOverlappedEx*)lpOverlapped;
-		pClientInfo = GetClientInfo(pOverlappedEx->SessionIndex).get();
+		pClientInfo = GetClientInfo(pOverlappedEx->SessionIndex);
 
 		//client가 접속을 끊었을때
 		if (pOverlappedEx->m_eOperation != eIOOperation::ACCEPT && (!bSuccess || (dwIoSize == 0 && bSuccess)))

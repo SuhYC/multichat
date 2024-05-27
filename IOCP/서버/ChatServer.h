@@ -1,7 +1,6 @@
 #pragma once
 
 #include "IOCompletionPort.h"
-#include "Packet.h"
 #include "RoomManager.h"
 #include "DataBase.h"
 
@@ -34,7 +33,7 @@ private:
 	{
 		std::cout << "[OnReceive] Socket(" << clientIndex_ << ")\n";
 
-		auto client = GetClientInfo(clientIndex_);
+		auto* client = GetClientInfo(clientIndex_);
 
 		// 아직 닉네임이 없음
 		if (client->GetNickname().empty())
@@ -97,7 +96,7 @@ private:
 		else if (client->GetChatRoom() != -1)
 		{
 
-			std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
+			ChatRoom* chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
 
 			// 채팅방 나가기 요청
 			if (!strcmp(pData, "/Q") || !strcmp(pData, "/q"))
@@ -120,7 +119,7 @@ private:
 			// 채팅방 개설 요청
 			if (!strcmp(pData, "/N") || !strcmp(pData, "/n"))
 			{
-				std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetEmptyRoom();
+				ChatRoom* chatRoom = mRoomManager.GetEmptyRoom();
 
 				if (chatRoom == nullptr)
 				{
@@ -145,7 +144,7 @@ private:
 			{
 				std::string code(pData);
 
-				std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetChatRoomByCode(code);
+				ChatRoom* chatRoom = mRoomManager.GetChatRoomByCode(code);
 
 				if (chatRoom == nullptr)
 				{
@@ -174,7 +173,7 @@ private:
 		std::cout << "[OnClose] Socket(" << clientIndex_ << ")\n";
 
 		auto client = GetClientInfo(clientIndex_);
-		std::shared_ptr<ChatRoom> chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
+		ChatRoom* chatRoom = mRoomManager.GetChatRoomByIndex(client->GetChatRoom());
 
 		if (chatRoom != nullptr)
 		{
@@ -191,7 +190,7 @@ private:
 	// 새롭게 클라이언트에게 전송할 데이터를 큐에 적재해두었다가 전송
 	void ProcessPacket();
 	// 전송할 데이터를 하나씩 큐에서 가져오는 함수
-	std::shared_ptr<PacketData> DequePacket();
+	PacketData* DequePacket();
 	// DB처리할 데이터를 파악하고 요청하는 함수
 	std::string CallDB(std::string str_);
 	// const char*형 데이터를 클라이언트에게 전달할 패킷으로 만들어 적재하는 함수
@@ -200,7 +199,7 @@ private:
 	void PushPacket(UINT32 clientIndex_, std::string data_);
 
 	// 브로드캐스팅을 위해 공유포인터 사용.
-	void PushPacket(UINT32 clientIndex_, UINT32 len_, std::shared_ptr<char> sp_);
+	void PushPacket(UINT32 clientIndex_, PacketData* packet_);
 
 	// 해당 채팅방의 모든유저에게 메시지 전달. 주로 공지메시지
 	void SendToAllUser(ChatRoom& chatroom_, std::string data_);
@@ -214,7 +213,7 @@ private:
 
 	std::mutex mLock;
 
-	std::queue<std::shared_ptr<PacketData>> mPacketDataQueue;
+	std::queue<PacketData*> mPacketDataQueue;
 
 	RoomManager mRoomManager;
 	DataBase mDataBase;

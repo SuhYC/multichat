@@ -71,7 +71,7 @@ bool DataBase::Connect()
 
 	if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO)
 	{
-		//errorDisplay(retcode);
+		
 		return false;
 	}
 
@@ -99,7 +99,7 @@ eReturnCode DataBase::SignUp(std::string id_, std::string pw_, std::string nickn
 	}
 
 	// INSERT 쿼리문 작성
-	std::wstring query = L"INSERT INTO USERDATA (ID, Password, Nickname) VALUES (?, ?, ?)";
+	std::wstring query = L"INSERT INTO LOGINDATA (ID, Password, Nickname) VALUES (?, ?, ?)";
 	
 	SQLPrepare(hstmt, (SQLWCHAR*)query.c_str(), SQL_NTS);
 
@@ -131,7 +131,7 @@ bool DataBase::CheckIDIsValid(std::string id_)
 	SQLLEN cbParam1 = SQL_NTS;
 
 	// SELECT 쿼리문 작성
-	std::wstring query = L"SELECT ID FROM USERDATA WHERE ID = ?";
+	std::wstring query = L"SELECT ID FROM LOGINDATA WHERE ID = ?";
 
 	// SELECT 후 데이터를 저장할 변수
 	int empno = 0;
@@ -160,7 +160,7 @@ bool DataBase::CheckIDIsValid(std::string id_)
 
 		else if (retcode == SQL_ERROR || retcode == SQL_SUCCESS_WITH_INFO)
 		{
-			//errorDisplay(retcode);
+			
 		}
 
 		else if (retcode == SQL_NO_DATA)
@@ -176,7 +176,7 @@ bool DataBase::CheckIDIsValid(std::string id_)
 	}
 	else
 	{
-		//errorDisplay(retcode);
+		
 	}
 
 	SQLCloseCursor(hstmt);
@@ -275,7 +275,7 @@ std::string DataBase::SignIn(std::string id_, std::string pw_)
 	SQLLEN cbParam1 = SQL_NTS;
 
 	// SELECT 쿼리문 작성
-	std::wstring query = L"SELECT * FROM USERDATA WHERE ID = ?";
+	std::wstring query = L"SELECT * FROM LOGINDATA WHERE ID = ?";
 
 	// SELECT 후 데이터를 저장할 변수
 	constexpr int size = 15;
@@ -333,13 +333,13 @@ std::string DataBase::SignIn(std::string id_, std::string pw_)
 
 			else if (retcode == SQL_ERROR || retcode == SQL_SUCCESS_WITH_INFO)
 			{
-				//errorDisplay(retcode);
+				
 				break;
 			}
 
 			else if (retcode == SQL_NO_DATA)
 			{
-				//errorDisplay(retcode);
+				
 				SQLCloseCursor(hstmt);
 				return std::string("[INFAIL]");
 			}
@@ -348,7 +348,7 @@ std::string DataBase::SignIn(std::string id_, std::string pw_)
 	}
 	else
 	{
-		//errorDisplay(retcode);
+		
 	}
 
 	SQLCloseCursor(hstmt);

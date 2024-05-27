@@ -5,7 +5,7 @@
 class RoomManager
 {
 private:
-	std::vector<std::shared_ptr<ChatRoom>> ChatRoomList;
+	std::vector<ChatRoom*> ChatRoomList;
 	// 현재 있는 채팅방들과 중복된 코드를 갖지 않도록 상호배제
 	std::mutex mRoomLock;
 	UINT32 mIndexCnt;
@@ -21,11 +21,11 @@ public:
 	// 채팅방 메모리 회수
 	void DestroyRoom();
 
-	std::shared_ptr<ChatRoom> GetChatRoomByIndex(const INT32 chatRoomIndex_);
-	std::shared_ptr<ChatRoom> GetChatRoomByCode(const std::string chatRoomCode_);
+	ChatRoom* GetChatRoomByIndex(const INT32 chatRoomIndex_);
+	ChatRoom* GetChatRoomByCode(const std::string chatRoomCode_);
 
 	// 빈 방을 가져와 기존 채팅방과 다른 코드를 적용 후 반환. Mutual Exclusion.
-	std::shared_ptr<ChatRoom> GetEmptyRoom();
+	ChatRoom* GetEmptyRoom();
 
 	// 새로운 6글자 채팅방코드를 생성.
 	std::string CreateNewCode();

@@ -48,12 +48,11 @@ public:
 	bool OnConnect(HANDLE IOCPHandle_, SOCKET socket_);
 	bool BindIOCompletionPort(HANDLE iocpHandle_);
 	void Close(bool bIsForce = false);
-	bool SendMsg(const UINT32 dataSize_, std::shared_ptr<char>& pMsg_);
+	bool SendMsg(PacketData* packet_);
 	void SendCompleted(const UINT32 dataSize_);
 
 private:
 	bool SendIO();
-	bool SetSocketOption();
 
 	UINT32 mIndex = -1;
 	SOCKET			mSocket;			//Client와 연결되는 소켓
@@ -70,7 +69,7 @@ private:
 	std::string mNickname;
 
 	std::mutex mSendLock;
-	std::queue<std::shared_ptr<stOverlappedEx>> mSendDataQueue;
+	std::queue<PacketData*> mSendDataQueue;
 
 	void MyAccept(SOCKET& socket_, GUID guid_);
 	LPFN_ACCEPTEX g_accept;

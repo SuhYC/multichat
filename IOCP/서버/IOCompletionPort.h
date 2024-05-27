@@ -24,10 +24,10 @@ protected:
 	void DestroyThread();
 
 	//각 클라이언트에 메시지 송신 요청을 한다.
-	bool SendMsg(const UINT32 sessionIndex_, const UINT32 dataSize_, std::shared_ptr<char>& pData);
+	bool SendMsg(PacketData* packet_);
 
 	//해당 번호의 클라이언트 정보 구조체를 반환.
-	std::shared_ptr<ClientInfo> GetClientInfo(const UINT32 sessionIndex_);
+	ClientInfo* GetClientInfo(const UINT32 sessionIndex_);
 
 private:
 	// 최대수용 클라이언트 수만큼 클라이언트정보 객체 생성
@@ -49,7 +49,7 @@ private:
 	void CloseSocket(ClientInfo* pClientInfo_, bool bIsForce_ = false);
 
 	//클라이언트 정보 저장 구조체
-	std::vector<std::shared_ptr<ClientInfo>> mClientInfos;
+	std::vector<ClientInfo*> mClientInfos;
 
 	//클라이언트의 접속을 받기위한 리슨 소켓
 	SOCKET		mListenSocket = INVALID_SOCKET;

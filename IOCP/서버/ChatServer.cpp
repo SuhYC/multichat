@@ -1,11 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "ChatServer.h"
 
-void packet_deleter(char* ptr)
-{
-	delete[] ptr;
-}
-
 void ChatServer::Init(int bindPort_)
 {
 	InitSocket();
@@ -49,11 +44,11 @@ void ChatServer::ProcessPacket()
 {
 	while (mIsRunProcessThread)
 	{
-		std::shared_ptr<PacketData> packetData(DequePacket());
+		PacketData* packetData = DequePacket();
 
 		if (packetData != nullptr)
 		{
-			SendMsg(packetData->SessionIndex, packetData->DataSize, packetData->pPacketData);
+			SendMsg(packetData);
 		}
 		else
 		{
@@ -64,19 +59,19 @@ void ChatServer::ProcessPacket()
 	return;
 }
 
-std::shared_ptr<PacketData> ChatServer::DequePacket()
+PacketData* ChatServer::DequePacket()
 {
 	std::lock_guard<std::mutex> guard(mLock);
 
 	if (mPacketDataQueue.empty())
 	{
-		return std::shared_ptr<PacketData>(nullptr);
+		return nullptr;
 	}
 
-	std::shared_ptr<PacketData> ret(mPacketDataQueue.front());
+	PacketData* ret = mPacketDataQueue.front();
 	mPacketDataQueue.pop();
 
-	return std::shared_ptr<PacketData>(ret);
+	return ret;
 }
 
 std::string ChatServer::CallDB(std::string str_)
@@ -201,23 +196,22 @@ void ChatServer::PushPacket(UINT32 clientIndex_, std::string data_)
 	int len = (int)strlen(str.c_str());
 
 	char* msg = strcpy(new char[len + 1], str.c_str());
+	msg[len] = NULL;
 
-	std::shared_ptr<char> newData(msg, packet_deleter);
-
-	std::shared_ptr<PacketData> packet = std::make_shared<PacketData>(clientIndex_, len, newData);
+	PacketData* packet = new PacketData(clientIndex_, len, msg);
 
 	std::lock_guard<std::mutex> guard(mLock);
-	mPacketDataQueue.emplace(std::move(packet));
+	mPacketDataQueue.push(packet);
 
 	return;
 }
 
-void ChatServer::PushPacket(UINT32 clientIndex_, UINT32 len_, std::shared_ptr<char> sp_)
+void ChatServer::PushPacket(UINT32 clientIndex_, PacketData* packet_)
 {
-	std::shared_ptr<PacketData> tmp = std::make_shared<PacketData>(clientIndex_, len_, sp_);
+	PacketData* tmp = new PacketData(*packet_, clientIndex_);
 
 	std::lock_guard<std::mutex> guard(mLock);
-	mPacketDataQueue.emplace(std::move(tmp));
+	mPacketDataQueue.push(tmp);
 
 	return;
 }
@@ -229,13 +223,16 @@ void ChatServer::SendToAllUser(ChatRoom& chatroom_, std::string nickname_, std::
 	UINT32 len = strlen(str.c_str());
 
 	char* msg = strcpy(new char[len + 1], str.c_str());
+	msg[len] = NULL;
 
-	std::shared_ptr<char> data(msg, packet_deleter);
+	PacketData* tmp = new PacketData(0, len, msg);
 
 	for (auto otherUserIndex : chatroom_.GetUserList())
 	{
-		PushPacket(otherUserIndex, len, data);
+		PushPacket(otherUserIndex, tmp);
 	}
+
+	delete tmp;
 
 	return;
 }
@@ -246,13 +243,16 @@ void ChatServer::SendToAllUser(ChatRoom& chatroom_, std::string data_)
 	UINT32 len = strlen(str.c_str());
 
 	char* msg = strcpy(new char[len + 1], str.c_str());
+	msg[len] = NULL;
 
-	std::shared_ptr<char> data(msg, packet_deleter);
+	PacketData* tmp = new PacketData(0, len, msg);
 
 	for (auto otherUserIndex : chatroom_.GetUserList())
 	{
-		PushPacket(otherUserIndex, len, data);
+		PushPacket(otherUserIndex, tmp);
 	}
+
+	delete tmp;
 
 	return;
 }
