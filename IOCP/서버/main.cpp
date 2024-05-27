@@ -1,30 +1,17 @@
-#define _CRTDBG_MAP_ALLOC
-#include <cstdlib>
-#include <crtdbg.h>
-
-#ifdef _DEBUG
-	#ifndef DBG_NEW
-		#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
-		#define new DBG_NEW
-	#endif
-#endif // _DEBUG
-
 #include "ChatServer.h"
 
 const UINT16 SERVER_PORT = 11021;
-const UINT16 MAX_CLIENT = 100;		//ÃÑ Á¢¼ÓÇÒ¼ö ÀÖ´Â Å¬¶óÀÌ¾ğÆ® ¼ö
-const UINT32 MAX_ROOM = 100;		//ÃÖ´ë Ã¤ÆÃ¹æÀÇ °¹¼ö
+const UINT16 MAX_CLIENT = 100;		//ì´ ì ‘ì†í• ìˆ˜ ìˆëŠ” í´ë¼ì´ì–¸íŠ¸ ìˆ˜
+const UINT32 MAX_ROOM = 100;		//ìµœëŒ€ ì±„íŒ…ë°©ì˜ ê°¯ìˆ˜
 
 int main()
 {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
 	ChatServer server;
 
 	server.Init(SERVER_PORT);
 	server.Run(MAX_CLIENT, MAX_ROOM);
 
-	std::cout << "¾Æ¹« Å°³ª ´©¸¦ ¶§±îÁö ´ë±âÇÕ´Ï´Ù\n";
+	std::cout << "ì•„ë¬´ í‚¤ë‚˜ ëˆ„ë¥¼ ë•Œê¹Œì§€ ëŒ€ê¸°í•©ë‹ˆë‹¤\n";
 	getchar();
 
 	server.End();
