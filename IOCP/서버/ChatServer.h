@@ -213,7 +213,7 @@ private:
 
 	std::mutex mLock;
 
-	std::queue<PacketData*> mPacketDataQueue;
+	myQueue mPacketDataQueue;
 
 	RoomManager mRoomManager;
 	DataBase mDataBase;

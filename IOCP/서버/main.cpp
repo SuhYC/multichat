@@ -1,8 +1,8 @@
 #include "ChatServer.h"
 
 const UINT16 SERVER_PORT = 11021;
-const UINT16 MAX_CLIENT = 100;		//ì´ ì ‘ì†í• ìˆ˜ ìˆëŠ” í´ë¼ì´ì–¸íŠ¸ ìˆ˜
-const UINT32 MAX_ROOM = 100;		//ìµœëŒ€ ì±„íŒ…ë°©ì˜ ê°¯ìˆ˜
+const UINT16 MAX_CLIENT = 100;		//ÃÑ Á¢¼ÓÇÒ¼ö ÀÖ´Â Å¬¶óÀÌ¾ğÆ® ¼ö
+const UINT32 MAX_ROOM = 100;		//ÃÖ´ë Ã¤ÆÃ¹æÀÇ °¹¼ö
 
 int main()
 {
@@ -11,7 +11,7 @@ int main()
 	server.Init(SERVER_PORT);
 	server.Run(MAX_CLIENT, MAX_ROOM);
 
-	std::cout << "ì•„ë¬´ í‚¤ë‚˜ ëˆ„ë¥¼ ë•Œê¹Œì§€ ëŒ€ê¸°í•©ë‹ˆë‹¤\n";
+	std::cout << "¾Æ¹« Å°³ª ´©¸¦ ¶§±îÁö ´ë±âÇÕ´Ï´Ù\n";
 	getchar();
 
 	server.End();

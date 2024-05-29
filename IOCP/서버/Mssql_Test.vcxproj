@@ -135,6 +135,7 @@
     <ClInclude Include="Define.h" />
     <ClInclude Include="IOCompletionPort.h" />
     <ClInclude Include="Packet.h" />
+    <ClInclude Include="PacketQueue.h" />
     <ClInclude Include="RoomManager.h" />
   </ItemGroup>
   <ItemGroup>

@@ -2,10 +2,11 @@
 #pragma comment(lib,"ws2_32.lib")
 #pragma comment(lib, "mswsock.lib") // AcceptEx()
 
-#include "Define.h"
+//#include "Define.h"
 #include <iostream>
 #include <mutex>
-#include <queue>
+//#include <queue>
+#include "PacketQueue.h"
 
 
 class ClientInfo
@@ -69,7 +70,7 @@ private:
 	std::string mNickname;
 
 	std::mutex mSendLock;
-	std::queue<PacketData*> mSendDataQueue;
+	myQueue mSendDataQueue;
 
 	void MyAccept(SOCKET& socket_, GUID guid_);
 	LPFN_ACCEPTEX g_accept;
