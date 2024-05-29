@@ -27,6 +27,8 @@ DB Injection Check
 - 원시포인터로 패킷을 구성하면 session 하나당 하나의 패킷이 구성되어야 하지만 RefCount를 이용해 하나의 패킷으로 여러개의 client에 메시지를 보낼 수 있다. 해당 패킷이 사용되는 마지막 메시지에서 패킷을 정리한다.
 - ~deleter를 사용하여 복잡한 구조의 포인터를 해제하거나, 배열포인터를 해제할 수 있다. 해당 코드 내에선 stOverlappedEx*->m_wsaBuf.buf를 해제하고 stOverlappedEx포인터를 해제하는 방식으로 작성.~
 - 스마트포인터의 오버헤드 문제로 원시포인터로 복귀. 다만 브로드캐스팅을 위해 패킷은 refCount를 활용하는 방식으로 재구성. atomic을 활용해 동기화비용을 줄임.
+## 6. STL - std::queue
+- std::queue<T>가 생각보다 느려서 queue의 기본 구성만 가지고 있는 myQueue클래스 추가. PacketData*만 담을 것이기 때문에 Non-template class로 구성.
 # 문서
 ### 유즈케이스 다이어그램
 <img src="https://github.com/SuhYC/multichat/blob/main/IOCP/image/usecase.png" width="500"><br/>
